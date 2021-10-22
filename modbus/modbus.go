@@ -171,7 +171,8 @@ func scrapeMetrics(definitions []config.MetricDef, c modbus.Client) ([]metric, e
 
 		// And here we are parcing Modbus Address from config file
 		// for register address
-		modAddress, err := strconv.ParseUint(fmt.Sprint(definition.Address)[1:], 10, 64)
+		// fretb
+		modAddress, err := strconv.ParseUint(fmt.Sprint(definition.Address), 10, 64)
 		if err != nil {
 			return []metric{}, fmt.Errorf("modbus register address parcing failed  %v", modAddress)
 		}
@@ -320,7 +321,12 @@ func parseModbusData(d config.MetricDef, rawData []byte) (float64, error) {
 				return float64(0), err
 			}
 			data := binary.BigEndian.Uint32(rawDataWithEndianness)
-			return scaleValue(d.Factor, float64(int32(data))), nil
+			// fretb - SMA inverters return max int when no value
+			if data == math.MaxInt32 || data == (math.MaxInt32 + 1)  {
+				return float64(int32(0)), nil
+			} else {
+				return scaleValue(d.Factor, float64(int32(data))), nil
+			}
 		}
 	case config.ModbusUInt32:
 		{
@@ -332,7 +338,12 @@ func parseModbusData(d config.MetricDef, rawData []byte) (float64, error) {
 				return float64(0), err
 			}
 			data := binary.BigEndian.Uint32(rawDataWithEndianness)
-			return scaleValue(d.Factor, float64(data)), nil
+			// fretb - SMA inverters return max int when no value
+			if data == math.MaxUint32 {
+				return float64(0), nil
+			} else {
+				return scaleValue(d.Factor, float64(data)), nil
+			}
 		}
 	case config.ModbusFloat32:
 		{
