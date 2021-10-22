@@ -44,3 +44,12 @@ $(EMBEDMD_BIN):
 $(GOLANG_CI_BIN):
 	mkdir -p $(FIRST_GOPATH)/bin
 	curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(FIRST_GOPATH)/bin $(GOLANGCI_LINT_VERSION)
+
+docker-build:
+	        docker build --tag fretb/modbus-exporter:latest .
+
+docker-push: docker-build
+	        docker push fretb/modbus-exporter:latest
+
+.PHONY: docker-all
+docker-all: docker-build docker-push
