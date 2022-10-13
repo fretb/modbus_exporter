@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -28,6 +29,11 @@ func main() {
 	telemetryRegistry := prometheus.NewRegistry()
 	telemetryRegistry.MustRegister(prometheus.NewGoCollector())
 	telemetryRegistry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+
+	// fretb - allow us to adjust log level
+	if level, ok := os.LookupEnv("LOG_LEVEL"); ok {
+		log.Base().SetLevel(level)
+	}
 
 	log.Infoln("Loading configuration file", *configFile)
 	config, err := config.LoadConfig(*configFile)
@@ -78,7 +84,7 @@ func scrapeHandler(e *modbus.Exporter, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Infof("got scrape request for module '%v' target '%v' and sub_target '%v'", moduleName, target, subTarget)
+	log.Debugf("got scrape request for module '%v' target '%v' and sub_target '%v'", moduleName, target, subTarget)
 
 	gatherer, err := e.Scrape(target, byte(subTarget), moduleName)
 	if err != nil {
